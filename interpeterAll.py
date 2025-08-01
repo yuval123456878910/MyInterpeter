@@ -5,12 +5,20 @@
 # progres:
 # adding veruble support # achived getting verbs
 # creating interpeter (setting values)
+# keywords: output
+
+# next steps:
+# adding keywords
+# adding keywords functionality
+
+# steps tutorial
+# add keywords functionality: get all elements with step count of keyword + 10
 
 # tokenizer (tokenize)
 
 def tokenizer(input_calculator: str):
     operators = ["+","-","*","/","="]
-    seperators = ["(",")"]
+    seperators = ["(",")",","]
     token_output = []
     add_to_output = ""
     token_type = ""
@@ -35,7 +43,8 @@ def tokenizer(input_calculator: str):
             add_to_output = ""
             stopString = character
             continue
-
+            
+            
         elif character.isspace():
             continue
 
@@ -53,28 +62,39 @@ def tokenizer(input_calculator: str):
                 add_to_output= ""
             token_type = "NUMBER"
 
-        elif character in seperators:
-            if token_type:
-                if add_to_output != "":
-                    token_output.append((token_type,add_to_output))
-                add_to_output= ""
-            token_type = "SEPARATOR"
-           
 
-        elif (character not in operators) and not (character in seperators):
+
+        elif character in seperators:
+            if add_to_output:
+                token_output.append((token_type,add_to_output))
+                add_to_output = ""
+
+            if token_type == "":
+                token_type = "SEPARATOR"
+            token_type = "SEPARATOR"
+            token_output.append((token_type,character))
+            
+            token_type = ""
+            continue
+
+        
+
+        elif (character not in operators) and  (character not in seperators):
             if len(add_to_output) > 0:
-                if not add_to_output[0].isalnum() and add_to_output[0] != ("" or " ") and character  in seperators:
-                    # Error 
+                if not add_to_output[0].isalnum() and add_to_output[0] not in ("" or " ") and character in seperators:
                     print(token_output, character, add_to_output)
                     print("The Identifier cant start by a operator!")
                     exit()
                 
-
+            # need to add lock if the next is text and add if the type isnt text
+            
             if token_type != "IDENTIFIER":
                 if add_to_output != "":
-                    token_output.append((token_type,add_to_output))
-                add_to_output= ""
-            token_type = "IDENTIFIER"
+                    token_output.append((token_type, add_to_output))
+                dd_to_output = ""
+                token_type = "IDENTIFIER"
+
+
 
         elif character.isalpha() and character not in operators:
             if token_type != "SYMBLE":
@@ -93,6 +113,14 @@ def tokenizer(input_calculator: str):
 
 # parser (set up steps)
 def parser(token_line: list):
+    # correct token line
+    keywords = ["output", "getConsole", "if", "elif", "else", "while"]
+    for i in range(len(token_line)):
+        char = token_line[i]
+        if char[1] in keywords:
+            token_line[i] = ("KEYWORD", char[1])
+
+
     output = []
     operators = ['+', "-", "*", "/"]
     seperators = ["(",")"]
@@ -102,22 +130,20 @@ def parser(token_line: list):
 
     for i in range(len(token_line)):
         charecter = token_line[i]  
-
         
-
-        if charecter[1] in seperators:
+        if charecter[1] in ["(",")"]:
             if charecter[1] == "(":
                 sepAdd += 10
             if charecter[1] == ")":
                 sepAdd -= 10
-
+        
         if charecter[1] in operators:
             if charecter[1] in step1:
                output.append((1+sepAdd,charecter)) 
             elif charecter[1] in step2:
                 output.append((2+sepAdd,charecter))
         else:
-            output.append((0,charecter))      
+            output.append((0+sepAdd,charecter))      
     return output
 
 
@@ -144,53 +170,54 @@ def typeTest(value,typeGive):
 # finalise: do all calculations
 def finalise(step_line: list, storege: dict):
     t = 0
-    seperators = ["(",")"]
+    seperators = ["(",")",","]
     operators = ["+", "-", "*", "/"]
-     
     Continue = True
     output = []
     t = 0
-    while Continue:
-        
+    while t < len(step_line):
+        char1 = step_line[t][1]
+        if char1[1] in ["(",")"]:
+            step_line.pop(t)
+            t -= 1
 
-        # configering
-        while t < len(step_line):
-            char1 = step_line[t][1]
-            if char1[1] in seperators:
-                step_line.pop(t)
-
-            if t < len(step_line)-1: 
-                if char1[0] == "IDENTIFIER" and step_line[t+1][1][1] != "=":
-                    if step_line[t+1][1][0] != "OPARATOR" or step_line[t+1][1][1] != "=":
-                        if char1[1] in storege:
-                            step_line.insert(t, (0,(storege.get(char1[1])[1][0],storege.get(char1[1])[1][1])))
-                            step_line.pop(t + 1)
-                        else:
-                            print("Cant find veruble! ")
-                            exit()
-            elif char1[0] == "IDENTIFIER":
+        if t+1 < len(step_line): 
+            if char1[0] == "IDENTIFIER" and step_line[t+1][1][1] != "=":
                 if char1[1] in storege:
-                    step_line.insert(t, (0,(storege.get(char1[1])[1][0],storege.get(char1[1])[1][1])))
+                    step_line.insert(t, (step_line[t][0],(storege.get(char1[1])[1][0],storege.get(char1[1])[1][1])))
                     step_line.pop(t + 1)
                 else:
                     print("Cant find veruble! ")
                     exit()
-                
-            # dubuge see line
-            t += 1
+        elif char1[0] == "IDENTIFIER":
 
+            if char1[1] in storege:
+                step_line.insert(t, (storege.get(char1[1])[0],(storege.get(char1[1])[1][0],storege.get(char1[1])[1][1])))
+                step_line.pop(t + 1)
+            else:
+                print("Cant find veruble! ")
+                exit()
+                
+        # dubuge see line
+        t += 1
+    while Continue:
+        # configering
         biggest = 0
         location = 0
         
         for i in range(len(step_line)):
             char = step_line[i]
-            if char[1][1] in seperators:
+            if char[1][1] in ["(",")"]:
                 continue
+            
             elif char[0] > biggest:
                 biggest = char[0]
                 location = i
+
+        if not step_line:
+            break
+
         result = 0
-        
         # Error Adding String
         if step_line[location][1][1] == "+":
             num1 = step_line[location-1][1][1]
@@ -241,10 +268,14 @@ def finalise(step_line: list, storege: dict):
         for i in output:
             if i[1][0] == "OPARATOR" and i[1][1] != "=":
                 found = True
+                break
         if found == False:
             Continue = False
+            break
+        print("LOOP")
+
+        
     
-    print("finised")
 
     output = step_line #[0][1][1]
     for i in range(len(output)):
@@ -256,20 +287,37 @@ def finalise(step_line: list, storege: dict):
     return output     
 
 def interpeter(finelise_code: list, storege: dict):
-    for i in range(len(finalise)):
-        charecter = finalise[i][1]
+    for i in range(len(finelise_code)):
+        charecter = finelise_code[i][1]
+        step = finelise_code[i][0]
         
+        code = []
         if i < len(finelise_code):
-            if charecter[0] == "IDENTIFIER":
-                pass
+            # checke if the charecter
+            if charecter[0] == "KEYWORD":
+                keyword = charecter
+                for ch in finelise_code[i:len(finelise_code)]:
+                    if ch[0] >= step+10:
+                        code.append(ch)
+                if charecter[1] == "output":
+                    code1 = finalise(code, storage)
+                    code2 = interpeter(code1, storage)
+                    
+                    pr = ""
+                    for i in code:
+                        if i == ",":
+                            pr += " "
+                        else:
+                            pr += str(i[1][1])
+                    print(pr)
 
+    return finelise_code          
 
-test = "hi = 40 * hi" 
-
+test = "hi/2"
 storage = {'hi': (0,("NUMBER", "40"))}
 
 test = tokenizer(test)
 test = parser(test)
 test = finalise(test, storage)
+test = interpeter(test, storage)
 print(test)
-
