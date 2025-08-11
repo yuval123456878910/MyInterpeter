@@ -8,6 +8,7 @@
 # keywords: output
 
 # next steps:
+# fixing infinit loop in (1+(2*3))
 # adding more keywords
 # adding keywords functionality
 # return to keywords
